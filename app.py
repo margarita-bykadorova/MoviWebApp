@@ -2,9 +2,13 @@ from flask import Flask, render_template, request, redirect, url_for, abort
 from data_manager import DataManager
 from models import db, Movie
 import os
+import requests
+from dotenv import load_dotenv
+load_dotenv()
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+OMDB_API_KEY = os.environ.get("OMDB_API_KEY")
 app = Flask(__name__)
 
 # Configure SQLAlchemy
@@ -47,8 +51,68 @@ def get_movies(user_id):
 
 @app.route('/users/<int:user_id>/movies', methods=['POST'])
 def add_movie(user_id):
-    """Add a new movie to a user’s list of favorite movies."""
-    pass
+    """
+    Add a new movie to a user’s list of favorite movies.
+
+    - Read the movie title from the form
+    - Fetch details from OMDb (if possible)
+    - Create a Movie instance
+    - Save it via DataManager
+    """
+    title = request.form.get("title")
+    if not title:
+        # No title provided, just go back to the movies page
+        return redirect(url_for("get_movies", user_id=user_id))
+
+    # If OMDB_API_KEY is not set, fall back to basic movie with just title
+    if not OMDB_API_KEY:
+        movie = Movie(name=title, user_id=user_id)
+        data_manager.add_movie(movie)
+        return redirect(url_for("get_movies", user_id=user_id))
+
+    try:
+        response = requests.get(
+            "http://www.omdbapi.com/",
+            params={"t": title, "apikey": OMDB_API_KEY},
+            timeout=5,
+        )
+        data = response.json()
+
+        # If OMDb didn’t find the movie, store only the title
+        if data.get("Response") == "False":
+            movie = Movie(name=title, user_id=user_id)
+        else:
+            name = data.get("Title") or title
+            director = data.get("Director") or None
+            year_str = data.get("Year")
+            poster = data.get("Poster")
+
+            # Safely convert year to int, if possible
+            try:
+                year_val = int(year_str) if year_str and year_str.isdigit() else None
+            except ValueError:
+                year_val = None
+
+            if poster == "N/A":
+                poster = None
+
+            movie = Movie(
+                name=name,
+                director=director,
+                year=year_val,
+                poster_url=poster,
+                user_id=user_id,
+            )
+
+        data_manager.add_movie(movie)
+
+    except Exception as exc:  # basic error handling; could be improved
+        print("Error fetching OMDb data:", exc)
+        # Fall back to creating a movie with only the title
+        movie = Movie(name=title, user_id=user_id)
+        data_manager.add_movie(movie)
+
+    return redirect(url_for("get_movies", user_id=user_id))
 
 
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/update', methods=['POST'])

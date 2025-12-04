@@ -205,3 +205,50 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.venv/
+
+# Environment variables
+.env
+*.env
+
+# -------------------------
+# Flask / Instance
+# -------------------------
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Flask debug logs
+*.log
+
+# -------------------------
+# PyCharm / JetBrains
+# -------------------------
+.idea/
+*.iml
+
+# VSCode
+.vscode/
+
+# -------------------------
+# OS-specific
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Misc
+# -------------------------
+*.cache

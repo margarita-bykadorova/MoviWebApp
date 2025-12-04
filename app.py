@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, abort
 from data_manager import DataManager
 from models import db, Movie
 import os
@@ -35,12 +35,15 @@ def create_user():
     data_manager.create_user(name)
     return redirect(url_for('index'))
 
-
 @app.route('/users/<int:user_id>/movies', methods=['GET'])
 def get_movies(user_id):
     """Display the user’s list of favorite movies."""
-    pass
+    user = data_manager.get_user(user_id)
+    if user is None:
+        abort(404)
 
+    movies = data_manager.get_movies(user_id)
+    return render_template('movies.html', user=user, movies=movies)
 
 @app.route('/users/<int:user_id>/movies', methods=['POST'])
 def add_movie(user_id):

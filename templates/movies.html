@@ -19,6 +19,13 @@
                     <img src="{{ movie.poster_url }}" alt="{{ movie.name }} poster" class="poster">
                 {% endif %}
 
+                <form action="{{ url_for('update_movie', user_id=user.id, movie_id=movie.id) }}" method="post" class="inline-form">
+                    <input type="text" name="new_title" placeholder="New title">
+                    <input type="number" name="new_year" placeholder="Year" min="1880" max="2100">
+                    <input type="text" name="new_director" placeholder="Director">
+                    <button type="submit">Update title</button>
+                </form>
+
             </li>
         {% else %}
             <li>No movies yet. Add one below!</li>

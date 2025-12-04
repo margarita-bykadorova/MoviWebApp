@@ -34,12 +34,22 @@ class DataManager:
         db.session.commit()
         return movie
 
-    def update_movie(self, movie_id, new_title):
-        """Update the title of a specific movie in the database."""
+    def update_movie(self, movie_id, title=None, year=None, director=None):
+        """
+        Update fields of a specific movie in the database.
+        Any of title, year, director may be provided.
+        """
         movie = Movie.query.get(movie_id)
         if movie is None:
             return None
-        movie.name = new_title
+
+        if title:
+            movie.name = title
+        if year is not None:
+            movie.year = year
+        if director is not None:
+            movie.director = director
+
         db.session.commit()
         return movie
 

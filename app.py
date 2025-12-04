@@ -5,6 +5,7 @@ import os
 import requests
 from dotenv import load_dotenv
 load_dotenv()
+from datetime import datetime
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -21,6 +22,25 @@ db.init_app(app)
 # Create an object of your DataManager class
 data_manager = DataManager()
 
+
+def parse_year(year_str):
+    """
+    Try to convert a string to a valid movie year (int).
+    Returns an int or None if it's empty or invalid.
+    """
+    if not year_str:
+        return None
+
+    year_str = str(year_str).strip()
+    if not year_str:
+        return None
+
+    try:
+        year_val = int(year_str)
+    except ValueError:
+        return None
+
+    return year_val
 
 @app.route('/')
 def index():
@@ -87,11 +107,7 @@ def add_movie(user_id):
             year_str = data.get("Year")
             poster = data.get("Poster")
 
-            # Safely convert year to int, if possible
-            try:
-                year_val = int(year_str) if year_str and year_str.isdigit() else None
-            except ValueError:
-                year_val = None
+            year_val = parse_year(year_str)
 
             if poster == "N/A":
                 poster = None
@@ -100,7 +116,7 @@ def add_movie(user_id):
                 name=name,
                 director=director,
                 year=year_val,
-                poster_url=poster,
+                poster_url=poster if poster != "N/A" else None,
                 user_id=user_id,
             )
 
@@ -117,8 +133,31 @@ def add_movie(user_id):
 
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/update', methods=['POST'])
 def update_movie(user_id, movie_id):
-    """Modify the title of a specific movie in a user’s list."""
-    pass
+    """
+    Modify the details of a specific movie in a user’s list:
+    title, year, and director.
+    """
+    new_title = request.form.get("new_title") or None
+    new_year_raw = request.form.get("new_year")
+    new_director = request.form.get("new_director") or None
+
+    year_val = parse_year(new_year_raw)
+
+    # If nothing was provided at all, just redirect back
+    if not any([new_title, new_year_raw.strip(), new_director]):
+        return redirect(url_for("get_movies", user_id=user_id))
+
+    updated = data_manager.update_movie(
+        movie_id,
+        title=new_title,
+        year=year_val,
+        director=new_director,
+    )
+
+    if updated is None:
+        abort(404)
+
+    return redirect(url_for("get_movies", user_id=user_id))
 
 
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/delete', methods=['POST'])

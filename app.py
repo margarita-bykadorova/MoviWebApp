@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template, request, redirect, url_for
 from data_manager import DataManager
 from models import db, Movie
 import os
@@ -19,41 +19,38 @@ data_manager = DataManager()
 
 
 @app.route('/')
-def home():
+def index():
     """Show a list of all registered users and a form for adding new users."""
-    return "Welcome to MoviWeb App!"
+    users = data_manager.get_users()
+    return render_template('index.html', users=users)
 
 
 @app.route('/users', methods=['POST'])
-def add_user():
+def create_user():
     """Add the new user info to the database, then redirect back to the home page."""
-    pass
+    name = request.form.get('name')
+    if not name:
+        # no name entered, just go back
+        return redirect(url_for('index'))
+    data_manager.create_user(name)
+    return redirect(url_for('index'))
 
 
 @app.route('/users/<int:user_id>/movies', methods=['GET'])
-def get_user_movies(user_id):
+def get_movies(user_id):
     """Display the user’s list of favorite movies."""
     pass
 
 
 @app.route('/users/<int:user_id>/movies', methods=['POST'])
-def add_user_movie(user_id):
-    """
-    Add a new movie to a user’s list of favorite movies.
-      - read the movie title from the form
-      - fetch details from OMDb
-      - create a Movie instance
-      - save it via data_manager.add_movie(movie)
-    """
+def add_movie(user_id):
+    """Add a new movie to a user’s list of favorite movies."""
     pass
 
 
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/update', methods=['POST'])
 def update_movie(user_id, movie_id):
-    """
-    Modify the title of a specific movie in a user’s list,
-    without depending on OMDb for corrections.
-    """
+    """Modify the title of a specific movie in a user’s list."""
     pass
 
 

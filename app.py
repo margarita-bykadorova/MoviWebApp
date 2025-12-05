@@ -1,25 +1,35 @@
-from flask import Flask, render_template, request, redirect, url_for, abort
-from data_manager import DataManager
-from models import db, Movie
 import os
+
 import requests
 from dotenv import load_dotenv
+from flask import Flask, render_template, request, redirect, url_for, abort, flash
+
+from data_manager import DataManager
+from models import db, Movie
+
 load_dotenv()
-from datetime import datetime
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-OMDB_API_KEY = os.environ.get("OMDB_API_KEY")
 app = Flask(__name__)
 
+# Secret key for sessions and flash messages
+secret = os.environ.get("SECRET_KEY")
+if not secret:
+    raise RuntimeError("SECRET_KEY is not set in the environment!")
+app.secret_key = secret
+
+# External API key
+OMDB_API_KEY = os.environ.get("OMDB_API_KEY")
+
 # Configure SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'data', 'movies.db')}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(basedir, 'data', 'movies.db')}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Link the database and the app
 db.init_app(app)
 
-# Create an object of your DataManager class
+# Data manager instance
 data_manager = DataManager()
 
 
@@ -42,12 +52,12 @@ def parse_year(year_str):
 
     return year_val
 
+
 @app.route('/')
 def index():
     """Show a list of all registered users and a form for adding new users."""
     users = data_manager.get_users()
     return render_template('index.html', users=users)
-
 
 @app.route('/users', methods=['POST'])
 def create_user():
@@ -72,24 +82,25 @@ def get_movies(user_id):
 @app.route('/users/<int:user_id>/movies', methods=['POST'])
 def add_movie(user_id):
     """
-    Add a new movie to a user’s list of favorite movies.
-
-    - Read the movie title from the form
-    - Fetch details from OMDb (if possible)
-    - Create a Movie instance
-    - Save it via DataManager
+    Add a movie for a given user.
+    - Reads the movie title from the form
+    - Fetches info from OMDb (if available)
+    - Falls back gracefully if data is missing
     """
     title = request.form.get("title")
+
     if not title:
-        # No title provided, just go back to the movies page
+        flash("Please enter a movie title.", "warning")
         return redirect(url_for("get_movies", user_id=user_id))
 
-    # If OMDB_API_KEY is not set, fall back to basic movie with just title
+    # If no API key, store minimal movie info.
     if not OMDB_API_KEY:
         movie = Movie(name=title, user_id=user_id)
         data_manager.add_movie(movie)
+        flash("Movie added using your title only. (No movie database configured.)", "info")
         return redirect(url_for("get_movies", user_id=user_id))
 
+    # Try fetching from OMDb
     try:
         response = requests.get(
             "http://www.omdbapi.com/",
@@ -98,38 +109,51 @@ def add_movie(user_id):
         )
         data = response.json()
 
-        # If OMDb didn’t find the movie, store only the title
+        # If OMDb did NOT find the movie
         if data.get("Response") == "False":
             movie = Movie(name=title, user_id=user_id)
-        else:
-            name = data.get("Title") or title
-            director = data.get("Director") or None
-            year_str = data.get("Year")
-            poster = data.get("Poster")
+            data_manager.add_movie(movie)
 
-            year_val = parse_year(year_str)
-
-            if poster == "N/A":
-                poster = None
-
-            movie = Movie(
-                name=name,
-                director=director,
-                year=year_val,
-                poster_url=poster if poster != "N/A" else None,
-                user_id=user_id,
+            flash(
+                "We couldn’t find this movie in the database, "
+                "but we added it using your title only.",
+                "warning"
             )
+            return redirect(url_for("get_movies", user_id=user_id))
+
+        # OMDb found the movie
+        name = data.get("Title") or title
+        director = data.get("Director") if data.get("Director") not in (None, "N/A") else None
+        year_str = data.get("Year")
+        poster = data.get("Poster") if data.get("Poster") not in (None, "N/A") else None
+
+        # Helper: Convert year
+        year_val = parse_year(year_str)
+
+        movie = Movie(
+            name=name,
+            director=director,
+            year=year_val,
+            poster_url=poster,
+            user_id=user_id,
+        )
 
         data_manager.add_movie(movie)
+        flash(f"Movie '{name}' added successfully!", "success")
 
-    except Exception as exc:  # basic error handling; could be improved
-        print("Error fetching OMDb data:", exc)
-        # Fall back to creating a movie with only the title
+
+    except (requests.exceptions.RequestException, ValueError):
+        # Network issues, timeout, invalid JSON, etc.
         movie = Movie(name=title, user_id=user_id)
         data_manager.add_movie(movie)
 
-    return redirect(url_for("get_movies", user_id=user_id))
+        flash(
+            "We couldn’t reach the movie database right now, "
+            "but we added your movie using the title you provided.",
+            "warning"
+        )
 
+    return redirect(url_for("get_movies", user_id=user_id))
 
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/update', methods=['POST'])
 def update_movie(user_id, movie_id):
@@ -159,7 +183,6 @@ def update_movie(user_id, movie_id):
 
     return redirect(url_for("get_movies", user_id=user_id))
 
-
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/delete', methods=['POST'])
 def delete_movie(user_id, movie_id):
     """Remove a specific movie from a user’s favorite movie list."""
@@ -167,6 +190,10 @@ def delete_movie(user_id, movie_id):
     if not success:
         abort(404)
     return redirect(url_for("get_movies", user_id=user_id))
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
 
 
 if __name__ == '__main__':

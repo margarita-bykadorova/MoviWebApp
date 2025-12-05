@@ -60,7 +60,7 @@
                     </div>
                 </form>
 
-                {# Delete form: no fields, just an endpoint to call #}
+                {# Delete form: no fields, just endpoint to call #}
                 <form id="delete-{{ movie.id }}"
                       action="{{ url_for('delete_movie', user_id=user.id, movie_id=movie.id) }}"
                       method="post">
@@ -76,14 +76,49 @@
                         </button>
                     </div>
                     <div class="col-6">
-                        <button type="submit"
-                                form="delete-{{ movie.id }}"
-                                class="btn btn-outline-danger w-100">
+                        {# This no longer deletes directly – it opens the modal #}
+                        <button type="button"
+                                class="btn btn-outline-danger w-100"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmDelete-{{ movie.id }}">
                             <i class="fa-regular fa-trash-can"></i> Delete
                         </button>
                     </div>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    {# Pastel confirm delete modal for this movie #}
+    <div class="modal fade" id="confirmDelete-{{ movie.id }}" tabindex="-1"
+         aria-labelledby="confirmDeleteLabel-{{ movie.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content delete-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteLabel-{{ movie.id }}">
+                        Delete movie
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete
+                    <strong>{{ movie.name }}</strong>
+                    {% if movie.year %} ({{ movie.year }}){% endif %}?
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            form="delete-{{ movie.id }}"
+                            class="btn btn-danger">
+                        <i class="fa-regular fa-trash-can"></i> Delete
+                    </button>
+                </div>
             </div>
         </div>
     </div>

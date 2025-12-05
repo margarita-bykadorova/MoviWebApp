@@ -207,3 +207,29 @@ h2,
     transform: translateX(-2px);
     transition: 0.15s ease;
 }
+
+/* Pastel delete modal styling */
+.delete-modal {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+}
+
+.delete-modal .modal-header {
+    background: linear-gradient(135deg, #eed9f8, #b3e4e4);
+    border-bottom: none;
+    color: #111827;
+}
+
+.delete-modal .modal-title {
+    font-weight: 600;
+}
+
+.delete-modal .modal-body {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.delete-modal .modal-footer {
+    border-top: none;
+}

@@ -8,10 +8,15 @@ using SQLAlchemy ORM.
 """
 
 from models import db, User, Movie
+from sqlalchemy import func
 
 
 class DataManager:
     """Data access layer for users and movies."""
+
+    def get_user_by_name(self, name):
+        """Return user by name (case-insensitive), or None."""
+        return User.query.filter(func.lower(User.name) == func.lower(name)).first()
 
     def create_user(self, name):
         """Add a new user to the database and return the created User."""

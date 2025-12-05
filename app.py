@@ -117,13 +117,22 @@ def index():
 
 @app.route("/users", methods=["POST"])
 def create_user():
-    """Add the new user info to the database, then redirect back to the home page."""
-    name = request.form.get("name")
+    """Add the new user if unique, otherwise flash a warning."""
+    name = request.form.get('name')
+
     if not name:
-        # no name entered, just go back
-        return redirect(url_for("index"))
+        flash("Please enter a name.", "warning")
+        return redirect(url_for('index'))
+
+    # Check for existing user (case-insensitive)
+    existing = data_manager.get_user_by_name(name)
+    if existing:
+        flash(f"User '{name}' already exists.", "warning")
+        return redirect(url_for('index'))
+
     data_manager.create_user(name)
-    return redirect(url_for("index"))
+    flash(f"User '{name}' created successfully!", "success")
+    return redirect(url_for('index'))
 
 
 @app.route("/users/<int:user_id>/movies", methods=["GET"])

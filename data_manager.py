@@ -26,7 +26,6 @@ class DataManager:
     def add_movie(self, movie):
         """
         Add a new movie to a user's favorites.
-
         Expects 'movie' to be a Movie instance that already has
         its fields (name, director, year, poster_url, user_id) set.
         """
@@ -54,9 +53,10 @@ class DataManager:
         return movie
 
     def delete_movie(self, movie_id):
-        """Delete a movie from the user's list of favorites."""
+        """Delete a movie from the database. Return True if deleted, False if not found."""
         movie = Movie.query.get(movie_id)
         if movie is None:
-            return
+            return False
         db.session.delete(movie)
         db.session.commit()
+        return True

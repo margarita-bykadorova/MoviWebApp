@@ -163,7 +163,10 @@ def update_movie(user_id, movie_id):
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/delete', methods=['POST'])
 def delete_movie(user_id, movie_id):
     """Remove a specific movie from a user’s favorite movie list."""
-    pass
+    success = data_manager.delete_movie(movie_id)
+    if not success:
+        abort(404)
+    return redirect(url_for("get_movies", user_id=user_id))
 
 
 if __name__ == '__main__':

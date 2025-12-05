@@ -2,59 +2,105 @@
 
 {% block content %}
 
-<h1>Movies for {{ user.name }}</h1>
+<h1 class="mb-4">Movies for {{ user.name }}</h1>
 
-<ul class="movie-list">
-    {% for movie in movies %}
-        <li class="movie-entry">
+{% if movies %}
+    <ul class="list-group mb-4 movie-list">
+        {% for movie in movies %}
+            <li class="list-group-item movie-entry">
+                <div class="row align-items-start">
+                    <div class="col-md-8 d-flex">
+                        {% if movie.poster_url %}
+                            <img src="{{ movie.poster_url }}"
+                                 alt="{{ movie.name }} poster"
+                                 class="poster me-3">
+                        {% endif %}
 
-            <div class="movie-info">
-                <strong>{{ movie.name }}</strong>
+                        <div class="movie-info">
+                            <h2 class="h5 mb-1">
+                                {{ movie.name }}
+                                {% if movie.year %}
+                                    <span class="text-muted">({{ movie.year }})</span>
+                                {% endif %}
+                            </h2>
 
-                {% if movie.year %}
-                    <span class="movie-year">({{ movie.year }})</span>
-                {% endif %}
+                            {% if movie.director %}
+                                <div class="text-muted mb-2">
+                                    Directed by: {{ movie.director }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
 
-                {% if movie.director %}
-                    <div class="movie-director">Directed by: {{ movie.director }}</div>
-                {% endif %}
+                    <div class="col-md-4">
+                        <!-- Update form -->
+                        <form action="{{ url_for('update_movie', user_id=user.id, movie_id=movie.id) }}"
+                              method="post"
+                              class="row g-2 mb-2">
+                            <div class="col-12">
+                                <input type="text"
+                                       name="new_title"
+                                       class="form-control form-control-sm"
+                                       placeholder="New title">
+                            </div>
+                            <div class="col-6">
+                                <input type="number"
+                                       name="new_year"
+                                       class="form-control form-control-sm"
+                                       placeholder="Year">
+                            </div>
+                            <div class="col-6">
+                                <input type="text"
+                                       name="new_director"
+                                       class="form-control form-control-sm"
+                                       placeholder="Director">
+                            </div>
+                            <div class="col-12 d-flex justify-content-start">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary me-2">
+                                    <i class="fa-regular fa-pen-to-square"></i> Update
+                                </button>
+                            </div>
+                        </form>
 
-                {% if movie.poster_url %}
-                    <img src="{{ movie.poster_url }}"
-                         alt="{{ movie.name }} poster"
-                         class="poster">
-                {% endif %}
-            </div>
+                        <!-- Delete form (separate, not nested) -->
+                        <form action="{{ url_for('delete_movie', user_id=user.id, movie_id=movie.id) }}"
+                              method="post"
+                              class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="fa-regular fa-trash-can"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-muted mb-4">No movies yet. Add one below!</p>
+{% endif %}
 
-            <form action="{{ url_for('update_movie', user_id=user.id, movie_id=movie.id) }}"
-                  method="post"
-                  class="inline-form">
-                <input type="text" name="new_title" placeholder="New title">
-                <input type="number" name="new_year" placeholder="Year">
-                <input type="text" name="new_director" placeholder="Director">
-                <button type="submit">Update</button>
-            </form>
-
-            <form action="{{ url_for('delete_movie', user_id=user.id, movie_id=movie.id) }}"
-                  method="post"
-                  class="inline-form">
-                <button type="submit" class="danger">Delete</button>
-            </form>
-
-        </li>
-
-    {% else %}
-        <li>No movies yet. Add one below!</li>
-    {% endfor %}
-</ul>
-
-
-<h2>Add new movie</h2>
-<form action="{{ url_for('add_movie', user_id=user.id) }}" method="post">
-    <input type="text" name="title" placeholder="Enter movie title" required>
-    <button type="submit">Add movie</button>
+<h2 class="h4 mb-3">Add new movie</h2>
+<form action="{{ url_for('add_movie', user_id=user.id) }}"
+      method="post"
+      class="row g-2 align-items-center mb-3">
+    <div class="col-sm-8 col-md-6">
+        <input type="text"
+               name="title"
+               class="form-control"
+               placeholder="Enter movie title"
+               required>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Add movie
+        </button>
+    </div>
 </form>
 
-<p><a href="{{ url_for('index') }}">Back to users</a></p>
+<p>
+    <a href="{{ url_for('index') }}" class="btn btn-link">
+        &larr; Back to users
+    </a>
+</p>
 
 {% endblock %}

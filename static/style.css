@@ -1,5 +1,32 @@
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.navbar-brand i {
+    margin-right: 6px;
+}
+
+.movie-list .movie-entry {
+    margin-bottom: 0.5rem;
+}
+
 .poster {
-    width: 150px;
-    border-radius: 8px;
-    margin-top: 8px;
+    width: 80px;
+    height: auto;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.movie-info h2 {
+    margin-bottom: 0.25rem;
+}
+
+.user-list .user-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.error-page {
+    margin-top: 3rem;
 }

@@ -1,3 +1,12 @@
+"""
+Data Manager module for interacting with the database.
+
+Provides CRUD operations for:
+- Users
+- Movies
+using SQLAlchemy ORM.
+"""
+
 from models import db, User, Movie
 
 
@@ -5,7 +14,7 @@ class DataManager:
     """Data access layer for users and movies."""
 
     def create_user(self, name):
-        """Add a new user to the database."""
+        """Add a new user to the database and return the created User."""
         new_user = User(name=name)
         db.session.add(new_user)
         db.session.commit()
@@ -20,14 +29,15 @@ class DataManager:
         return User.query.get(user_id)
 
     def get_movies(self, user_id):
-        """Return a list of all the movies for a specific user."""
+        """Return a list of all movies belonging to a specific user."""
         return Movie.query.filter_by(user_id=user_id).all()
 
     def add_movie(self, movie):
         """
         Add a new movie to a user's favorites.
-        Expects 'movie' to be a Movie instance that already has
-        its fields (name, director, year, poster_url, user_id) set.
+
+        Expects 'movie' to be a Movie instance
+        with all fields already set.
         """
         db.session.add(movie)
         db.session.commit()
@@ -35,8 +45,14 @@ class DataManager:
 
     def update_movie(self, movie_id, title=None, year=None, director=None):
         """
-        Update fields of a specific movie in the database.
-        Any of title, year, director may be provided.
+        Update the fields of a movie.
+
+        Parameters may be:
+        - title: str or None
+        - year: int or None
+        - director: str or None
+
+        Empty strings are ignored.
         """
         movie = Movie.query.get(movie_id)
         if movie is None:
@@ -46,17 +62,24 @@ class DataManager:
             movie.name = title
         if year is not None:
             movie.year = year
-        if director is not None:
+        if director:
             movie.director = director
 
         db.session.commit()
         return movie
 
     def delete_movie(self, movie_id):
-        """Delete a movie from the database. Return True if deleted, False if not found."""
+        """
+        Delete a movie by ID.
+
+        Returns:
+            True if deleted
+            False if movie not found
+        """
         movie = Movie.query.get(movie_id)
         if movie is None:
             return False
+
         db.session.delete(movie)
         db.session.commit()
         return True

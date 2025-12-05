@@ -1,3 +1,15 @@
+"""
+Flask application for the MoviWeb App.
+
+This module:
+- Initializes the Flask app and database connection
+- Loads API keys and configuration
+- Defines all application routes for users and movies
+- Handles adding, updating, deleting, and displaying movies
+- Integrates with DataManager and OMDb API
+- Provides global error handling and flash messaging
+"""
+
 import os
 
 import requests
@@ -9,7 +21,7 @@ from models import db, Movie
 
 load_dotenv()
 
-basedir = os.path.abspath(os.path.dirname(__file__))
+BASEDIR = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 
@@ -23,7 +35,9 @@ app.secret_key = secret
 OMDB_API_KEY = os.environ.get("OMDB_API_KEY")
 
 # Configure SQLAlchemy
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(basedir, 'data', 'movies.db')}"
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"sqlite:///{os.path.join(BASEDIR, 'data', 'movies.db')}"
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Link the database and the app
@@ -53,33 +67,77 @@ def parse_year(year_str):
     return year_val
 
 
-@app.route('/')
+def create_basic_movie(title, user_id, flash_message=None, category="info"):
+    """
+    Create and save a movie with only a title.
+    Optionally flash a message for the user.
+    """
+    movie = Movie(name=title, user_id=user_id)
+    data_manager.add_movie(movie)
+    if flash_message:
+        flash(flash_message, category)
+    return movie
+
+
+def create_movie_from_omdb(data, fallback_title, user_id):
+    """
+    Create and save a Movie instance from OMDb response data.
+    Uses fallback_title if OMDb title is missing.
+    """
+    name = data.get("Title") or fallback_title
+
+    director = data.get("Director")
+    if director in (None, "N/A"):
+        director = None
+
+    year_val = parse_year(data.get("Year"))
+
+    poster = data.get("Poster")
+    if poster in (None, "N/A"):
+        poster = None
+
+    movie = Movie(
+        name=name,
+        director=director,
+        year=year_val,
+        poster_url=poster,
+        user_id=user_id,
+    )
+    data_manager.add_movie(movie)
+    flash(f"Movie '{name}' added successfully!", "success")
+    return movie
+
+
+@app.route("/")
 def index():
     """Show a list of all registered users and a form for adding new users."""
     users = data_manager.get_users()
-    return render_template('index.html', users=users)
+    return render_template("index.html", users=users)
 
-@app.route('/users', methods=['POST'])
+
+@app.route("/users", methods=["POST"])
 def create_user():
     """Add the new user info to the database, then redirect back to the home page."""
-    name = request.form.get('name')
+    name = request.form.get("name")
     if not name:
         # no name entered, just go back
-        return redirect(url_for('index'))
+        return redirect(url_for("index"))
     data_manager.create_user(name)
-    return redirect(url_for('index'))
+    return redirect(url_for("index"))
 
-@app.route('/users/<int:user_id>/movies', methods=['GET'])
+
+@app.route("/users/<int:user_id>/movies", methods=["GET"])
 def get_movies(user_id):
-    """Display the user’s list of favorite movies."""
+    """Display the user's list of favorite movies."""
     user = data_manager.get_user(user_id)
     if user is None:
         abort(404)
 
     movies = data_manager.get_movies(user_id)
-    return render_template('movies.html', user=user, movies=movies)
+    return render_template("movies.html", user=user, movies=movies)
 
-@app.route('/users/<int:user_id>/movies', methods=['POST'])
+
+@app.route("/users/<int:user_id>/movies", methods=["POST"])
 def add_movie(user_id):
     """
     Add a movie for a given user.
@@ -95,9 +153,12 @@ def add_movie(user_id):
 
     # If no API key, store minimal movie info.
     if not OMDB_API_KEY:
-        movie = Movie(name=title, user_id=user_id)
-        data_manager.add_movie(movie)
-        flash("Movie added using your title only. (No movie database configured.)", "info")
+        create_basic_movie(
+            title,
+            user_id,
+            "Movie added using your title only. (No movie database configured.)",
+            "info",
+        )
         return redirect(url_for("get_movies", user_id=user_id))
 
     # Try fetching from OMDb
@@ -111,54 +172,35 @@ def add_movie(user_id):
 
         # If OMDb did NOT find the movie
         if data.get("Response") == "False":
-            movie = Movie(name=title, user_id=user_id)
-            data_manager.add_movie(movie)
-
-            flash(
+            create_basic_movie(
+                title,
+                user_id,
                 "We couldn’t find this movie in the database, "
                 "but we added it using your title only.",
-                "warning"
+                "warning",
             )
             return redirect(url_for("get_movies", user_id=user_id))
 
         # OMDb found the movie
-        name = data.get("Title") or title
-        director = data.get("Director") if data.get("Director") not in (None, "N/A") else None
-        year_str = data.get("Year")
-        poster = data.get("Poster") if data.get("Poster") not in (None, "N/A") else None
-
-        # Helper: Convert year
-        year_val = parse_year(year_str)
-
-        movie = Movie(
-            name=name,
-            director=director,
-            year=year_val,
-            poster_url=poster,
-            user_id=user_id,
-        )
-
-        data_manager.add_movie(movie)
-        flash(f"Movie '{name}' added successfully!", "success")
-
+        create_movie_from_omdb(data, title, user_id)
 
     except (requests.exceptions.RequestException, ValueError):
         # Network issues, timeout, invalid JSON, etc.
-        movie = Movie(name=title, user_id=user_id)
-        data_manager.add_movie(movie)
-
-        flash(
+        create_basic_movie(
+            title,
+            user_id,
             "We couldn’t reach the movie database right now, "
             "but we added your movie using the title you provided.",
-            "warning"
+            "warning",
         )
 
     return redirect(url_for("get_movies", user_id=user_id))
 
-@app.route('/users/<int:user_id>/movies/<int:movie_id>/update', methods=['POST'])
+
+@app.route("/users/<int:user_id>/movies/<int:movie_id>/update", methods=["POST"])
 def update_movie(user_id, movie_id):
     """
-    Modify the details of a specific movie in a user’s list:
+    Modify the details of a specific movie in a user's list:
     title, year, and director.
     """
     new_title = request.form.get("new_title") or None
@@ -167,7 +209,7 @@ def update_movie(user_id, movie_id):
 
     year_val = parse_year(new_year_raw)
 
-    # If user didn’t enter anything at all
+    # If user didn't enter anything at all
     if not any([new_title, (new_year_raw and new_year_raw.strip()), new_director]):
         flash("No changes provided to update.", "warning")
         return redirect(url_for("get_movies", user_id=user_id))
@@ -185,9 +227,10 @@ def update_movie(user_id, movie_id):
     flash("Movie updated successfully.", "success")
     return redirect(url_for("get_movies", user_id=user_id))
 
-@app.route('/users/<int:user_id>/movies/<int:movie_id>/delete', methods=['POST'])
+
+@app.route("/users/<int:user_id>/movies/<int:movie_id>/delete", methods=["POST"])
 def delete_movie(user_id, movie_id):
-    """Remove a specific movie from a user’s favorite movie list."""
+    """Remove a specific movie from a user's favorite movie list."""
     success = data_manager.delete_movie(movie_id)
     if not success:
         abort(404)
@@ -195,12 +238,14 @@ def delete_movie(user_id, movie_id):
     flash("Movie deleted.", "info")
     return redirect(url_for("get_movies", user_id=user_id))
 
+
 @app.errorhandler(404)
-def page_not_found(e):
+def page_not_found(_error):
+    """Render custom 404 page."""
     return render_template("404.html"), 404
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     with app.app_context():
         db.create_all()
 

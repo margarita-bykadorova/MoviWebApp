@@ -1,36 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
+<h1>Users</h1>
 
-<h1 class="mb-4">Users</h1>
+<div class="user-list">
+    {% for user in users %}
+        <a href="{{ url_for('get_movies', user_id=user.id) }}" class="user-card">
+            <span class="user-name">{{ user.name }}</span>
+            <span class="user-hover-text">View movies → </span>
+            <span class="user-arrow">&rsaquo;</span>
+        </a>
+    {% else %}
+        <p>No users yet. Add one below!</p>
+    {% endfor %}
+</div>
 
-{% if users %}
-    <ul class="list-group mb-4 user-list">
-        {% for user in users %}
-            <li class="list-group-item d-flex justify-content-between align-items-center user-entry">
-                <span>{{ user.name }}</span>
-                <a href="{{ url_for('get_movies', user_id=user.id) }}"
-                   class="btn btn-sm btn-outline-primary"
-                   aria-label="View movies for {{ user.name }}">
-                    View movies
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p class="text-muted mb-4">No users yet. Add one below!</p>
-{% endif %}
+<h2>Add new user</h2>
 
-<h2 class="h4 mb-3">Add new user</h2>
-<form action="{{ url_for('create_user') }}" method="post" class="row g-2 align-items-center">
-    <div class="col-sm-8 col-md-6">
-        <input type="text" name="name" class="form-control" placeholder="Enter user name" required>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-success">
-            <i class="fa-solid fa-user-plus"></i> Add user
-        </button>
-    </div>
+<form action="{{ url_for('create_user') }}" method="post" class="add-user-form">
+    <input type="text" name="name" placeholder="Enter user name" required class="form-control">
+
+    <button type="submit" class="btn add-user-btn">
+        <i class="fa-solid fa-user-plus"></i>
+        Add user
+    </button>
 </form>
-
 {% endblock %}

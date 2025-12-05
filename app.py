@@ -167,8 +167,9 @@ def update_movie(user_id, movie_id):
 
     year_val = parse_year(new_year_raw)
 
-    # If nothing was provided at all, just redirect back
-    if not any([new_title, new_year_raw.strip(), new_director]):
+    # If user didn’t enter anything at all
+    if not any([new_title, (new_year_raw and new_year_raw.strip()), new_director]):
+        flash("No changes provided to update.", "warning")
         return redirect(url_for("get_movies", user_id=user_id))
 
     updated = data_manager.update_movie(
@@ -181,6 +182,7 @@ def update_movie(user_id, movie_id):
     if updated is None:
         abort(404)
 
+    flash("Movie updated successfully.", "success")
     return redirect(url_for("get_movies", user_id=user_id))
 
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/delete', methods=['POST'])
@@ -189,6 +191,8 @@ def delete_movie(user_id, movie_id):
     success = data_manager.delete_movie(movie_id)
     if not success:
         abort(404)
+
+    flash("Movie deleted.", "info")
     return redirect(url_for("get_movies", user_id=user_id))
 
 @app.errorhandler(404)

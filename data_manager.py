@@ -46,6 +46,25 @@ class DataManager:
 
         return query.all()
 
+    def movie_exists_for_user(self, user_id, title):
+        """
+        Return True if a movie with this title already exists
+        for the given user (case-insensitive).
+        """
+        if not title:
+            return False
+
+        normalized = title.strip()
+        if not normalized:
+            return False
+
+        existing = Movie.query.filter(
+            Movie.user_id == user_id,
+            func.lower(Movie.name) == func.lower(normalized)
+        ).first()
+
+        return existing is not None
+
     def add_movie(self, movie):
         """
         Add a new movie to a user's favorites.

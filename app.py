@@ -167,27 +167,38 @@ def get_movies(user_id):
     return render_template("movies.html", user=user, movies=movies, search=search_term)
 
 
-@app.route("/users/<int:user_id>/movies", methods=["POST"])
+@app.route('/users/<int:user_id>/movies', methods=['POST'])
 def add_movie(user_id):
     """
     Add a movie for a given user.
     - Reads the movie title from the form
+    - Enforces one-title-per-user uniqueness
     - Fetches info from OMDb (if available)
-    - Falls back gracefully if data is missing
+    - Falls back gracefully if data is missing or OMDb fails
     """
-    title = request.form.get("title")
+    raw_title = request.form.get("title")
 
+    if not raw_title:
+        flash("Please enter a movie title.", "warning")
+        return redirect(url_for("get_movies", user_id=user_id))
+
+    title = raw_title.strip()
     if not title:
         flash("Please enter a movie title.", "warning")
         return redirect(url_for("get_movies", user_id=user_id))
 
-    # If no API key, store minimal movie info.
+    # 1) First uniqueness check (by user input title, case-insensitive)
+    if data_manager.movie_exists_for_user(user_id, title):
+        flash(f"Movie '{title}' is already in your library.", "warning")
+        return redirect(url_for("get_movies", user_id=user_id))
+
+    # If no API key, just create a basic movie
     if not OMDB_API_KEY:
         create_basic_movie(
-            title,
-            user_id,
-            "Movie added using your title only. (No movie database configured.)",
-            "info",
+            title=title,
+            user_id=user_id,
+            flash_message="Movie added using your title only. (No movie database configured.)",
+            category="info",
         )
         return redirect(url_for("get_movies", user_id=user_id))
 
@@ -203,25 +214,37 @@ def add_movie(user_id):
         # If OMDb did NOT find the movie
         if data.get("Response") == "False":
             create_basic_movie(
-                title,
-                user_id,
-                "We couldn’t find this movie in the database, "
-                "but we added it using your title only.",
-                "warning",
+                title=title,
+                user_id=user_id,
+                flash_message=(
+                    "We couldn’t find this movie in the database, "
+                    "but we added it using your title only."
+                ),
+                category="warning",
             )
             return redirect(url_for("get_movies", user_id=user_id))
 
-        # OMDb found the movie
-        create_movie_from_omdb(data, title, user_id)
+        # OMDb found the movie → get the final title it suggests
+        omdb_title = data.get("Title") or title
+
+        # 2) Second uniqueness check using OMDb title
+        if data_manager.movie_exists_for_user(user_id, omdb_title):
+            flash(f"Movie '{omdb_title}' is already in your library.", "warning")
+            return redirect(url_for("get_movies", user_id=user_id))
+
+        # Create & save full movie from OMDb data
+        create_movie_from_omdb(data=data, fallback_title=title, user_id=user_id)
 
     except (requests.exceptions.RequestException, ValueError):
         # Network issues, timeout, invalid JSON, etc.
         create_basic_movie(
-            title,
-            user_id,
-            "We couldn’t reach the movie database right now, "
-            "but we added your movie using the title you provided.",
-            "warning",
+            title=title,
+            user_id=user_id,
+            flash_message=(
+                "We couldn’t reach the movie database right now, "
+                "but we added your movie using the title you provided."
+            ),
+            category="warning",
         )
 
     return redirect(url_for("get_movies", user_id=user_id))

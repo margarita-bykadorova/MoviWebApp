@@ -33,9 +33,18 @@ class DataManager:
         """Return a single user by ID, or None if not found."""
         return User.query.get(user_id)
 
-    def get_movies(self, user_id):
-        """Return a list of all movies belonging to a specific user."""
-        return Movie.query.filter_by(user_id=user_id).all()
+    def get_movies(self, user_id, search=None):
+        """
+        Return a list of all movies belonging to a specific user.
+
+        If 'search' is provided, filter movies by title (case-insensitive).
+        """
+        query = Movie.query.filter_by(user_id=user_id)
+
+        if search:
+            query = query.filter(Movie.name.ilike(f"%{search}%"))
+
+        return query.all()
 
     def add_movie(self, movie):
         """

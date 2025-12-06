@@ -5,6 +5,24 @@
 
     <h1 class="mb-4">Movies for {{ user.name }}</h1>
 
+    <!-- Search form -->
+    <form method="get"
+          action="{{ url_for('get_movies', user_id=user.id) }}"
+          class="row g-2 mb-4">
+        <div class="col-md-8">
+            <input type="text"
+                   name="q"
+                   class="form-control"
+                   placeholder="Search movies by title"
+                   value="{{ search or '' }}">
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
+        </div>
+    </form>
+
     {% for movie in movies %}
     <div class="card mb-4 p-3 shadow-sm">
         <div class="row g-3 align-items-center">
@@ -125,7 +143,11 @@
     {% endfor %}
 
     {% if movies|length == 0 %}
-        <p class="text-muted">No movies yet. Add one below!</p>
+        {% if search %}
+            <p class="text-muted">No movies found for "{{ search }}".</p>
+        {% else %}
+            <p class="text-muted">No movies yet. Add one below!</p>
+        {% endif %}
     {% endif %}
 
     <!-- Add Movie Section -->

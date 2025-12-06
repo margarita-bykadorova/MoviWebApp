@@ -135,15 +135,20 @@ def create_user():
     return redirect(url_for('index'))
 
 
-@app.route("/users/<int:user_id>/movies", methods=["GET"])
+@app.route('/users/<int:user_id>/movies', methods=['GET'])
 def get_movies(user_id):
-    """Display the user's list of favorite movies."""
+    """Display the user’s list of favorite movies, optionally filtered by a search term."""
     user = data_manager.get_user(user_id)
     if user is None:
         abort(404)
 
-    movies = data_manager.get_movies(user_id)
-    return render_template("movies.html", user=user, movies=movies)
+    search_term = request.args.get("q", "").strip()
+    movies = data_manager.get_movies(
+        user_id,
+        search=search_term if search_term else None
+    )
+
+    return render_template("movies.html", user=user, movies=movies, search=search_term)
 
 
 @app.route("/users/<int:user_id>/movies", methods=["POST"])

@@ -1,7 +1,7 @@
 # Movie Library (MoviWeb App)  
 *Your digital shelf for favorite movies*
 
-![App Screenshot](docs/screenshot.png)
+![App Screenshot](docs/Screenshot.png)
 
 A small Flask web application where users can keep a personal library of favourite movies.  
 Each user has their own list, with movie data fetched from the OMDb API when available.

@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MoviWeb App</title>
+
+    <!-- Page title (children pages can override it) -->
+    <title>{% block title %}Movie Library{% endblock %}</title>
 
     <!-- Bootstrap CSS -->
     <link
@@ -12,20 +14,21 @@
         crossorigin="anonymous"
     >
 
-    <!-- Optional: Font Awesome for icons -->
+    <!-- Font Awesome (icons) -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
         crossorigin="anonymous"
-        referrerpolicy="no-referrer"
     />
 
-    <!-- Your custom CSS -->
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container">
         <a class="navbar-brand d-flex flex-column" href="{{ url_for('index') }}">
@@ -39,38 +42,38 @@
 
 <div class="container">
 
-    {# Flash messages #}
+    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="mt-2">
                 {% for category, message in messages %}
-                    {% set bs_category = 'info' %}
-                    {% if category == 'error' %}
-                        {% set bs_category = 'danger' %}
-                    {% elif category == 'success' %}
-                        {% set bs_category = 'success' %}
-                    {% elif category == 'warning' %}
-                        {% set bs_category = 'warning' %}
-                    {% elif category == 'info' %}
-                        {% set bs_category = 'info' %}
-                    {% endif %}
-                    <div class="alert alert-{{ bs_category }} alert-dismissible fade show" role="alert">
+                    {# Map internal categories to Bootstrap alert classes #}
+                    {% set bs_class = {
+                        "success": "success",
+                        "warning": "warning",
+                        "error":   "danger",
+                        "info":    "info"
+                    }[category] %}
+
+                    <div class="alert alert-{{ bs_class }} alert-dismissible fade show" role="alert">
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close"
+                                data-bs-dismiss="alert" aria-label="Close">
+                        </button>
                     </div>
                 {% endfor %}
             </div>
         {% endif %}
     {% endwith %}
 
+    <!-- Main page content -->
     <main class="py-3">
-        {% block content %}
-        {% endblock %}
+        {% block content %}{% endblock %}
     </main>
 
 </div>
 
-<!-- Bootstrap JS (for dismissible alerts etc.) -->
+<!-- Bootstrap JS -->
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"

@@ -9,6 +9,14 @@
     <form method="get"
           action="{{ url_for('get_movies', user_id=user.id) }}"
           class="row g-2 mb-4">
+        {% if search %}
+        <div class="mb-3">
+            <a href="{{ url_for('get_movies', user_id=user.id) }}"
+               class="btn btn-outline-secondary">
+                Clear search
+            </a>
+        </div>
+        {% endif %}
         <div class="col-md-8">
             <input type="text"
                    name="q"
@@ -144,9 +152,9 @@
 
     {% if movies|length == 0 %}
         {% if search %}
-            <p class="text-muted">No movies found for "{{ search }}".</p>
+            <p class="empty-message">No movies found for "{{ search }}".</p>
         {% else %}
-            <p class="text-muted">No movies yet. Add one below!</p>
+            <p class="empty-message">No movies yet. Add one below!</p>
         {% endif %}
     {% endif %}
 

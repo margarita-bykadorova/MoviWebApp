@@ -233,3 +233,14 @@ h2,
 .delete-modal .modal-footer {
     border-top: none;
 }
+
+.btn-outline-secondary {
+    border-radius: 8px;
+}
+
+.empty-message {
+    font-size: 1.2rem;
+    color: #374151;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}

@@ -15,14 +15,29 @@ body {
 /* Navbar */
 .navbar {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+    padding-top: 1.2rem !important;
+    padding-bottom: 1.2rem !important;
     font-size: 1.25rem;
 }
 
 .navbar-brand i {
     margin-right: 6px;
-    font-size: 1.4rem;
+    font-size: 1.75rem;
+}
+
+.navbar-brand .app-title {
+    font-size: 1.55rem;
+    font-weight: 700;
+}
+
+/* Navbar slogan */
+.navbar-brand .slogan {
+    font-size: 0.9rem;
+    margin-left: 2rem;   /* aligns under the title */
+    margin-top: 4px;
+    color: rgba(217, 238, 239, 0.65);      /* soft, readable gray */
+    letter-spacing: 0.2px;
+    opacity: 0.9;
 }
 
 /* Headings */
@@ -39,6 +54,23 @@ h2,
 /* Flash messages */
 .flash-messages {
     margin-bottom: 1rem;
+}
+
+/* Harmonize navbar style with page body font */
+.navbar-brand .app-title {
+    font-size: 2rem;          /* softer large title */
+    font-weight: 500;            /* not too bold */
+    letter-spacing: -0.1px;      /* modern subtle touch */
+    color: #f8fafc;              /* clean soft white */
+}
+
+.navbar-brand .slogan {
+    margin-top: 6px;
+    font-size: 1rem;
+    font-weight: 400;
+    opacity: 0.85;
+    letter-spacing: -0.2px;
+    color: #e5e7eb;
 }
 
 /* ----------------------------------------------------

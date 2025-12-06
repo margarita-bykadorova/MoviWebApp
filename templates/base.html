@@ -28,8 +28,11 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container">
-        <a class="navbar-brand" href="{{ url_for('index') }}">
-            <i class="fa-solid fa-film"></i> MoviWeb App
+        <a class="navbar-brand d-flex flex-column" href="{{ url_for('index') }}">
+            <span class="app-title">
+                <i class="fa-solid fa-film"></i> Movie Library
+            </span>
+            <small class="slogan">Your digital shelf for favorite movies</small>
         </a>
     </div>
 </nav>

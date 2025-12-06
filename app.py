@@ -135,6 +135,22 @@ def create_user():
     return redirect(url_for('index'))
 
 
+@app.route("/users/<int:user_id>/delete", methods=["POST"])
+def delete_user(user_id):
+    """Delete a user and all their movies."""
+    user = data_manager.get_user(user_id)
+    if user is None:
+        abort(404)
+
+    deleted = data_manager.delete_user(user_id)
+    if deleted:
+        flash(f"User '{user.name}' and all their movies were deleted.", "info")
+    else:
+        flash("User could not be deleted.", "warning")
+
+    return redirect(url_for("index"))
+
+
 @app.route('/users/<int:user_id>/movies', methods=['GET'])
 def get_movies(user_id):
     """Display the user’s list of favorite movies, optionally filtered by a search term."""

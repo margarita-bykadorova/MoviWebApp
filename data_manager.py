@@ -97,3 +97,19 @@ class DataManager:
         db.session.delete(movie)
         db.session.commit()
         return True
+
+    def delete_user(self, user_id):
+        """
+        Delete a user and all their movies.
+
+        Returns:
+            True if the user existed and was deleted,
+            False if no such user was found.
+        """
+        user = User.query.get(user_id)
+        if user is None:
+            return False
+
+        db.session.delete(user)  # movies are removed via cascade="all, delete"
+        db.session.commit()
+        return True

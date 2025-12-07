@@ -8,6 +8,13 @@ Each user has their own list, with movie data fetched from the OMDb API when ava
 
 ---
 
+## 🚀 Live Demo
+
+Try the app here:  
+👉 https://Margarita.pythonanywhere.com
+
+---
+
 ## Features
 
 - 👤 **User management**
@@ -164,17 +171,6 @@ http://127.0.0.1:5000/
 - Delete movies (with modal)  
 
 Uniqueness is enforced: a user cannot add the same movie title twice.
-
----
-
-## Deployment (PythonAnywhere)
-
-1. Upload or pull from GitHub  
-2. Create virtualenv  
-3. `pip install -r requirements.txt`  
-4. Configure WSGI  
-5. Add environment variables (`SECRET_KEY`, `OMDB_API_KEY`)  
-6. Reload web app
 
 ---
 

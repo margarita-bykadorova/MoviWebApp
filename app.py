@@ -11,6 +11,7 @@ This module:
 """
 
 import os
+from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
@@ -21,7 +22,9 @@ from models import db, Movie
 
 load_dotenv()
 
-BASEDIR = os.path.abspath(os.path.dirname(__file__))
+# Base directory and DB path using pathlib
+BASE_DIR = Path(__file__).resolve().parent
+DB_PATH = BASE_DIR / "data" / "movies.db"
 
 app = Flask(__name__)
 
@@ -35,9 +38,7 @@ app.secret_key = secret_key
 OMDB_API_KEY = os.environ.get("OMDB_API_KEY")
 
 # Configure SQLAlchemy
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"sqlite:///{os.path.join(BASEDIR, 'data', 'movies.db')}"
-)
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Link the database and the app
@@ -134,11 +135,12 @@ def index():
 
 @app.route("/users", methods=["POST"])
 def create_user():
-    """Add a new user if the name is unique, otherwise flash a warning."""
-    name = request.form.get("name")
+    """Add the new user if unique and name is not empty/whitespace."""
+    raw_name = request.form.get("name", "")
+    name = raw_name.strip()  # remove leading/trailing spaces
 
     if not name:
-        flash("Please enter a name.", "warning")
+        flash("Please enter a non-empty name.", "warning")
         return redirect(url_for("index"))
 
     # Check for existing user (case-insensitive)
@@ -278,15 +280,27 @@ def update_movie(user_id, movie_id):
     """
     Modify the details of a specific movie in a user's list:
     title, year, and/or director.
+    Whitespace-only inputs are ignored.
     """
-    new_title = request.form.get("new_title") or None
-    new_year_raw = request.form.get("new_year")
-    new_director = request.form.get("new_director") or None
+    raw_title = request.form.get("new_title")
+    raw_year = request.form.get("new_year")
+    raw_director = request.form.get("new_director")
 
-    year_val = parse_year(new_year_raw)
+    # Trim whitespace; treat empty/whitespace-only as None
+    new_title = raw_title.strip() if raw_title and raw_title.strip() else None
+    new_director = (
+        raw_director.strip()
+        if raw_director and raw_director.strip()
+        else None
+    )
 
-    # If user didn't enter anything at all
-    if not any([new_title, (new_year_raw and new_year_raw.strip()), new_director]):
+    # Parse year (parse_year already strips internally and returns None if invalid)
+    year_val = parse_year(raw_year)
+
+    # Did the user actually type anything meaningful?
+    has_year_input = bool(raw_year and raw_year.strip())
+
+    if not any([new_title, has_year_input, new_director]):
         flash("No changes provided to update.", "warning")
         return redirect(url_for("get_movies", user_id=user_id))
 
